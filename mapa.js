@@ -11,12 +11,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const mapWrapper = document.querySelector('.map-wrapper');
 
     let selectedDestinationId = null;
-    let isTraveling = false; // Lock interaction during travel
+    let isTraveling = false;
 
-    // Ensure popup is hidden on load
     popup.style.display = 'none';
 
-    // Data for each section
     const sectionData = {
         1: {
             title: "Seção 1: Coleta de Dados",
@@ -40,21 +38,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Handle Point Clicks (and Touch)
     points.forEach(point => {
         point.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent map click from closing
-
-            if (isTraveling) return; // Ignore if traveling
+            e.stopPropagation();
+            if (isTraveling) return;
 
             const id = point.getAttribute('data-id');
             selectedDestinationId = id;
 
-            // Update Popup Content
             popupTitle.textContent = sectionData[id].title;
             popupDesc.textContent = sectionData[id].desc;
 
-            // Position Popup Logic (Smart Positioning)
             const transform = point.getAttribute('transform');
             const matches = transform.match(/translate\(([^,]+),\s*([^)]+)\)/);
 
@@ -62,135 +56,132 @@ document.addEventListener('DOMContentLoaded', () => {
                 const x = parseFloat(matches[1]);
                 const y = parseFloat(matches[2]);
 
-                // Convert SVG coordinates to %
                 let leftPercent = (x / 800) * 100;
                 let topPercent = (y / 600) * 100;
 
-                // Reset classes and styles
+                // Reset popup
                 popup.className = '';
-                popup.style.transform = 'translate(0, 0)';
-                popup.style.left = `${leftPercent}%`;
-                popup.style.top = `${topPercent}%`;
-                popup.style.right = 'auto';
-                popup.style.bottom = 'auto';
-                popup.style.display = 'block'; // Show briefly to measure
+                popup.style.display = 'block';
 
-                // Boundary Detection
+                // Get popup dimensions
                 const popupRect = popup.getBoundingClientRect();
                 const mapRect = mapWrapper.getBoundingClientRect();
+                const popupWidth = popupRect.width;
+                const popupHeight = popupRect.height;
 
                 let isRight = false;
-                let isBottom = false;
+                let tailClass = '';
 
-                // Check Right Edge
-                if (popupRect.right > mapRect.right) {
-                    popup.style.left = 'auto';
-                    popup.style.right = '10px'; // Fixed margin from right
-                    isRight = true;
+                // Determine horizontal positioning
+                if (leftPercent > 50) {
+                    // Position to the left of point
+                    popup.style.left = `${leftPercent}%`;
+                    popup.style.right = 'auto';
+                    popup.style.transform = `translate(calc(-100% - 20px), -50%)`;
+                    isRight = true; // tail будет справа от popup (указывает на точку)
                 } else {
-                    // Default: Popup left aligned with point (or slightly centered)
-                    popup.style.transform = 'translate(-10%, -115%)'; // Default shift up and slightly left to align tail
+                    // Position to the right of point
+                    popup.style.left = `${leftPercent}%`;
+                    popup.style.right = 'auto';
+                    popup.style.transform = `translate(20px, -50%)`;
+                    isRight = false; // tail слева от popup
                 }
 
-                // Check Top Edge (More aggressive check)
-                // If the top of the popup is close to the top of the map (within 50px)
-                if (popupRect.top < mapRect.top + 50) {
-                    // Shift Down
-                    popup.style.top = `${topPercent + 5}%`; // Below point
-                    popup.style.transform = isRight ? 'translate(0, 0)' : 'translate(-10%, 10%)';
-                    isBottom = true;
-                } else {
-                    // Default: Above point
+                // Set vertical position
+                popup.style.top = `${topPercent}%`;
+
+                // Check if popup goes off screen vertically after positioning
+                const updatedRect = popup.getBoundingClientRect();
+
+                if (updatedRect.top < mapRect.top + 50) {
+                    // Position below the point
+                    popup.style.top = `${topPercent}%`;
                     if (isRight) {
-                        popup.style.transform = 'translate(0, -115%)';
+                        popup.style.transform = `translate(calc(-100% - 20px), 20px)`;
+                    } else {
+                        popup.style.transform = `translate(20px, 20px)`;
                     }
-                }
-
-                // Apply Tail Class
-                if (isBottom) {
-                    // Popup is BELOW point. Tail should be TOP.
-                    popup.classList.add(isRight ? 'tail-top-right' : 'tail-top-left');
+                    tailClass = isRight ? 'tail-top-right' : 'tail-top-left';
+                } else if (updatedRect.bottom > mapRect.bottom - 20) {
+                    // Position above the point
+                    popup.style.top = `${topPercent}%`;
+                    if (isRight) {
+                        popup.style.transform = `translate(calc(-100% - 20px), calc(-100% - 20px))`;
+                    } else {
+                        popup.style.transform = `translate(20px, calc(-100% - 20px))`;
+                    }
+                    tailClass = isRight ? 'tail-bottom-right' : 'tail-bottom-left';
                 } else {
-                    // Popup is ABOVE point. Tail should be BOTTOM.
-                    popup.classList.add(isRight ? 'tail-bottom-right' : 'tail-bottom-left');
+                    // Default centered vertically
+                    tailClass = isRight ? 'tail-bottom-right' : 'tail-bottom-left';
                 }
-            }
 
-            // Show Popup
-            popup.style.display = 'block';
+                // Add wide class for point 1
+                if (id === '1') {
+                    popup.classList.add('wide');
+                }
+
+                // Apply tail class
+                popup.classList.add(tailClass);
+            }
         });
     });
 
-    // Close Popup on Close Button
     btnFechar.addEventListener('click', (e) => {
         e.stopPropagation();
         popup.style.display = 'none';
         selectedDestinationId = null;
     });
 
-    // Close popup if clicking empty map area
     mapWrapper.addEventListener('click', () => {
         if (isTraveling) return;
         popup.style.display = 'none';
     });
 
-    // Prevent popup click from closing itself
     popup.addEventListener('click', (e) => {
         e.stopPropagation();
     });
 
-    // Handle Travel Click
     btnViajar.addEventListener('click', (e) => {
         e.stopPropagation();
         if (!selectedDestinationId) return;
 
-        isTraveling = true; // Lock interaction
-
-        // Close popup
+        isTraveling = true;
         popup.style.display = 'none';
 
-        // Get the route path definition
         const routeId = `route-${selectedDestinationId}`;
         const routeElement = document.getElementById(routeId);
         const pathData = routeElement.getAttribute('d');
 
-        // Draw the route
         activeRoutePath.setAttribute('d', pathData);
 
-        // Prepare Route Animation
         const length = activeRoutePath.getTotalLength();
         activeRoutePath.style.strokeDasharray = length;
         activeRoutePath.style.strokeDashoffset = length;
 
-        // Force reflow
         activeRoutePath.getBoundingClientRect();
 
-        // Animate Line Drawing
         activeRoutePath.style.transition = 'stroke-dashoffset 1.5s ease-in-out';
         activeRoutePath.style.strokeDashoffset = '0';
 
-        // Start Pointer Animation after line is drawn
         setTimeout(() => {
             animatePointer(routeElement);
         }, 1500);
     });
 
     function animatePointer(routePath) {
-        // Reset marker
         carMarker.style.transition = 'none';
 
         const length = routePath.getTotalLength();
-        const duration = 2500; // 2.5 seconds travel time
+        const duration = 2500;
         const startTime = performance.now();
 
         function step(currentTime) {
             const elapsed = currentTime - startTime;
             const progress = Math.min(elapsed / duration, 1);
 
-            // Get point at current length
             const point = routePath.getPointAtLength(progress * length);
 
-            // Calculate rotation (look ahead)
             let angle = 0;
             if (progress < 0.95) {
                 const nextPoint = routePath.getPointAtLength((progress + 0.05) * length);
@@ -204,13 +195,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 angle = (Math.atan2(dy, dx) * 180 / Math.PI) + 90;
             }
 
-            // Update marker position (Smaller scale: 0.8)
             carMarker.setAttribute('transform', `translate(${point.x}, ${point.y}) rotate(${angle}) scale(0.8)`);
 
             if (progress < 1) {
                 requestAnimationFrame(step);
             } else {
-                // Animation Complete
                 showArrival();
             }
         }
@@ -219,13 +208,55 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showArrival() {
-        // Show Overlay
         arrivalOverlay.classList.add('visible');
 
-        // Redirect after delay
         setTimeout(() => {
             const url = sectionData[selectedDestinationId].url;
             window.location.href = url;
         }, 2000);
     }
+
+    // Fullscreen
+    const fullscreenBtn = document.getElementById('fullscreen-btn');
+    const exitFullscreenBtn = document.getElementById('exit-fullscreen-btn');
+
+    fullscreenBtn.addEventListener('click', () => {
+        if (mapWrapper.requestFullscreen) {
+            mapWrapper.requestFullscreen();
+        } else if (mapWrapper.webkitRequestFullscreen) {
+            mapWrapper.webkitRequestFullscreen();
+        } else if (mapWrapper.msRequestFullscreen) {
+            mapWrapper.msRequestFullscreen();
+        }
+    });
+
+    exitFullscreenBtn.addEventListener('click', () => {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+        }
+    });
+
+    document.addEventListener('fullscreenchange', () => {
+        if (document.fullscreenElement) {
+            fullscreenBtn.style.display = 'none';
+            exitFullscreenBtn.style.display = 'inline-flex';
+        } else {
+            fullscreenBtn.style.display = 'inline-flex';
+            exitFullscreenBtn.style.display = 'none';
+        }
+    });
+
+    document.addEventListener('webkitfullscreenchange', () => {
+        if (document.webkitFullscreenElement) {
+            fullscreenBtn.style.display = 'none';
+            exitFullscreenBtn.style.display = 'inline-flex';
+        } else {
+            fullscreenBtn.style.display = 'inline-flex';
+            exitFullscreenBtn.style.display = 'none';
+        }
+    });
 });
