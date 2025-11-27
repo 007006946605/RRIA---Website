@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-br">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style2.css">
-    <title>Mapa Investigativo</title>
+    <title>Mapa Investigativo - RRIA</title>
 </head>
 
 <body>
@@ -13,6 +13,7 @@
         <div class="marca">
             <h1>RRIA</h1>
         </div>
+        <div style="font-size: 0.9rem; opacity: 0.8;">Modo Navegação</div>
     </header>
 
     <section id="mapa">
@@ -22,57 +23,183 @@
                     <h2>Mapa das Seções</h2>
                 </div>
                 <div id="subtitulo">
-                    <h3>Cada ponto representa uma unidade de análise da RRIA — navegue pelas seções usando nossa visão
-                        geolocalizada.</h3>
+                    <h3>Selecione um destino para iniciar sua investigação.</h3>
+                </div>
+            </div>
+
+            <div class="map-wrapper">
+                <!-- Popup Info (Floating) -->
+                <div id="info-popup">
+                    <button id="btn-fechar-popup">×</button>
+                    <h4 id="popup-title">Título da Seção</h4>
+                    <p id="popup-desc">Breve descrição sobre o que será encontrado nesta seção da investigação.</p>
+                    <button id="btn-viajar">Viajar</button>
                 </div>
 
-                <svg width="700" height="500" style="border:1px solid #999; background:#e6f2ff; font-family:Arial">
-                    <!-- Áreas de bairro -->
-                    <rect x="0" y="0" width="700" height="250" fill="#f9f9f9" />
-                    <rect x="0" y="250" width="700" height="250" fill="#f0f0f0" />
-                    <text x="20" y="40" font-size="14" fill="#666">Bairro Jardim Azul</text>
-                    <text x="20" y="280" font-size="14" fill="#666">Bairro Vila Nova</text>
+                <!-- Arrival Overlay -->
+                <div id="arrival-overlay">
+                    <h2>Você Chegou!</h2>
+                    <p>Redirecionando para a seção...</p>
+                </div>
 
-                    <!-- Estradas principais (alinhadas com a rota) -->
-                    <!-- Horizontal superior -->
-                    <rect x="0" y="155" width="700" height="30" fill="#dcdcdc" />
-                    <!-- Vertical central -->
-                    <rect x="365" y="155" width="30" height="190" fill="#dcdcdc" />
-                    <!-- Horizontal inferior -->
-                    <rect x="0" y="310" width="700" height="30" fill="#dcdcdc" />
+                <svg viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice" id="main-map">
+                    <defs>
+                        <pattern id="grass" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+                            <rect width="20" height="20" fill="#cbe6a3" />
+                            <circle cx="5" cy="5" r="1.5" fill="#b5d685" />
+                        </pattern>
+                        <pattern id="building-pattern" x="0" y="0" width="10" height="10" patternUnits="userSpaceOnUse">
+                            <rect width="10" height="10" fill="#f0f2f5" />
+                            <rect x="0" y="0" width="9" height="9" fill="#e1e4e8" />
+                        </pattern>
+                    </defs>
 
-                    <!-- Nomes das ruas -->
-                    <text x="20" y="150" font-size="12" fill="#333">Av. Central</text>
-                    <text x="380" y="180" font-size="12" fill="#333" transform="rotate(90 380,180)">Rua do Sol</text>
-                    <text x="20" y="305" font-size="12" fill="#333">Rua das Flores</text>
+                    <!-- Background Land -->
+                    <rect width="800" height="600" fill="#e9ebee" />
 
-                    <!-- Ponto A -->
-                    <circle cx="80" cy="170" r="10" fill="blue" />
-                    <text x="70" y="150" font-size="12" fill="blue">Ponto A</text>
+                    <!-- Irregular Blocks/Buildings (Background for streets to cut through) -->
+                    <!-- We draw "blocks" of buildings. The space between them forms the streets. -->
 
-                    <!-- Ponto B -->
-                    <circle cx="620" cy="325" r="10" fill="red" />
-                    <text x="610" y="305" font-size="12" fill="red">Ponto B</text>
+                    <!-- Top Left Block -->
+                    <path d="M-10,-10 L350,-10 L300,200 L100,250 L-10,150 Z" fill="url(#building-pattern)" stroke="#ccc"
+                        stroke-width="1" />
+                    <!-- Top Right Block -->
+                    <path d="M450,-10 L810,-10 L810,150 L600,250 L450,150 Z" fill="url(#building-pattern)" stroke="#ccc"
+                        stroke-width="1" />
+                    <!-- Bottom Left Block -->
+                    <path d="M-10,250 L250,300 L200,500 L-10,610 Z" fill="url(#building-pattern)" stroke="#ccc"
+                        stroke-width="1" />
+                    <!-- Bottom Right Block -->
+                    <path d="M500,350 L810,250 L810,610 L400,610 L350,450 Z" fill="url(#building-pattern)" stroke="#ccc"
+                        stroke-width="1" />
+                    <!-- Center Top Block -->
+                    <path d="M380,-10 L420,-10 L420,100 L380,100 Z" fill="url(#building-pattern)" stroke="#ccc"
+                        stroke-width="1" />
 
-                    <!-- Caminho em Z (rota sobre as estradas) -->
-                    <path id="trajeto" d="M80,170 L380,170 L380,325 L620,325" stroke="#00cc66" stroke-width="6"
-                        fill="none" stroke-linecap="round" stroke-dasharray="10,5" />
+                    <!-- New Blocks for Density -->
+                    <path d="M50,300 L150,350 L100,450 L20,400 Z" fill="url(#building-pattern)" stroke="#ccc"
+                        stroke-width="1" />
+                    <path d="M650,300 L750,350 L700,450 L620,400 Z" fill="url(#building-pattern)" stroke="#ccc"
+                        stroke-width="1" />
 
-                    <!-- Marcador animado (seta) -->
-                    <polygon points="0,0 20,10 0,20" fill="orange">
-                        <animateMotion dur="10s" repeatCount="indefinite" rotate="auto">
-                            <mpath href="#trajeto" />
-                        </animateMotion>
-                    </polygon>
+                    <!-- Random Buildings (Rectangles on top of blocks for detail) -->
+                    <rect x="50" y="50" width="60" height="80" fill="#d1d5db" />
+                    <rect x="150" y="30" width="100" height="60" fill="#d1d5db" />
+                    <rect x="650" y="50" width="80" height="80" fill="#d1d5db" />
+                    <rect x="50" y="400" width="100" height="100" fill="#d1d5db" />
+                    <rect x="600" y="450" width="120" height="80" fill="#d1d5db" />
+                    <rect x="300" y="50" width="50" height="50" fill="#d1d5db" />
+                    <rect x="450" y="50" width="50" height="50" fill="#d1d5db" />
+
+                    <!-- Parks -->
+                    <path d="M280,400 L350,550 L450,550 L400,400 Z" fill="url(#grass)" />
+
+                    <!-- Streets (The gaps are the streets, but we draw lines to define routes clearly) -->
+                    <!-- We use a multi-line approach: Thick white line for road, thinner grey for border -->
+
+                    <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <!-- Define the Road Network Paths -->
+                        <!-- 1. Main Diagonal TopLeft to BottomRight -->
+                        <path d="M0,0 L350,250 L450,300 L800,600" stroke="#d6d6d6" stroke-width="28" />
+                        <path d="M0,0 L350,250 L450,300 L800,600" stroke="#ffffff" stroke-width="24" />
+
+                        <!-- 2. Main Diagonal TopRight to BottomLeft -->
+                        <path d="M800,0 L450,300 L350,250 L0,600" stroke="#d6d6d6" stroke-width="28" />
+                        <path d="M800,0 L450,300 L350,250 L0,600" stroke="#ffffff" stroke-width="24" />
+
+                        <!-- 3. Horizontal Center -->
+                        <path d="M0,300 L800,300" stroke="#d6d6d6" stroke-width="24" />
+                        <path d="M0,300 L800,300" stroke="#ffffff" stroke-width="20" />
+
+                        <!-- 4. Vertical Center -->
+                        <path d="M400,0 L400,600" stroke="#d6d6d6" stroke-width="24" />
+                        <path d="M400,0 L400,600" stroke="#ffffff" stroke-width="20" />
+
+                        <!-- 5. Curved Road Top -->
+                        <path d="M100,0 Q400,150 700,0" stroke="#d6d6d6" stroke-width="20" />
+                        <path d="M100,0 Q400,150 700,0" stroke="#ffffff" stroke-width="16" />
+
+                        <!-- 6. New Connecting Roads for Density -->
+                        <!-- Left Vertical Connector -->
+                        <path d="M200,0 L200,600" stroke="#d6d6d6" stroke-width="16" />
+                        <path d="M200,0 L200,600" stroke="#ffffff" stroke-width="12" />
+
+                        <!-- Right Vertical Connector -->
+                        <path d="M600,0 L600,600" stroke="#d6d6d6" stroke-width="16" />
+                        <path d="M600,0 L600,600" stroke="#ffffff" stroke-width="12" />
+
+                        <!-- Top Horizontal Connector -->
+                        <path d="M0,150 L800,150" stroke="#d6d6d6" stroke-width="16" />
+                        <path d="M0,150 L800,150" stroke="#ffffff" stroke-width="12" />
+
+                        <!-- Bottom Horizontal Connector -->
+                        <path d="M0,450 L800,450" stroke="#d6d6d6" stroke-width="16" />
+                        <path d="M0,450 L800,450" stroke="#ffffff" stroke-width="12" />
+                    </g>
+
+                    <!-- Route Paths (Hidden) - MUST FOLLOW WHITE LINES EXACTLY -->
+                    <!-- Start: Center Intersection (400, 300) -->
+
+                    <!-- Dest 1: Top Left Building (100, 80) -->
+                    <!-- Route: Center -> Up-Left Diagonal -> Curve -->
+                    <path id="route-1" d="M400,300 L350,250 L225,160 L180,100" fill="none" stroke="none" />
+
+                    <!-- Dest 2: Top Right Building (700, 80) -->
+                    <!-- Route: Center -> Up-Right Diagonal -> Curve -->
+                    <path id="route-2" d="M400,300 L450,300 L550,225 L620,100" fill="none" stroke="none" />
+
+                    <!-- Dest 3: Bottom Left Building (100, 500) -->
+                    <!-- Route: Center -> Down-Left Diagonal -->
+                    <path id="route-3" d="M400,300 L350,250 L175,425 L100,500" fill="none" stroke="none" />
+
+                    <!-- Dest 4: Bottom Right Building (700, 500) -->
+                    <!-- Route: Center -> Down-Right Diagonal -->
+                    <path id="route-4" d="M400,300 L450,300 L625,450 L700,515" fill="none" stroke="none" />
+
+                    <!-- Visible Route Line -->
+                    <path id="active-route" d="" stroke="#b980ff" stroke-width="8" fill="none" stroke-linecap="round"
+                        stroke-linejoin="round" opacity="0.9" />
+
+                    <!-- Start Point -->
+                    <g id="start-point" transform="translate(400, 300)">
+                        <circle r="12" fill="#33ccff" stroke="#fff" stroke-width="3" />
+                        <circle r="5" fill="#fff" />
+                    </g>
+
+                    <!-- Destinations (Placed ON BUILDINGS, not roads) -->
+                    <!-- 1 -->
+                    <g class="map-point" data-id="1" transform="translate(100, 80)">
+                        <circle r="15" fill="#ff5252" stroke="#fff" stroke-width="3" />
+                        <text y="5" text-anchor="middle" fill="white" font-weight="bold" font-size="10">1</text>
+                    </g>
+                    <!-- 2 -->
+                    <g class="map-point" data-id="2" transform="translate(700, 80)">
+                        <circle r="15" fill="#ff5252" stroke="#fff" stroke-width="3" />
+                        <text y="5" text-anchor="middle" fill="white" font-weight="bold" font-size="10">2</text>
+                    </g>
+                    <!-- 3 -->
+                    <g class="map-point" data-id="3" transform="translate(80, 500)">
+                        <circle r="15" fill="#ff5252" stroke="#fff" stroke-width="3" />
+                        <text y="5" text-anchor="middle" fill="white" font-weight="bold" font-size="10">3</text>
+                    </g>
+                    <!-- 4 -->
+                    <g class="map-point" data-id="4" transform="translate(720, 520)">
+                        <circle r="15" fill="#ff5252" stroke="#fff" stroke-width="3" />
+                        <text y="5" text-anchor="middle" fill="white" font-weight="bold" font-size="10">4</text>
+                    </g>
+
+                    <!-- Pointer Marker (Arrow) -->
+                    <g id="car-marker" class="car-marker" transform="translate(400, 300) scale(0)">
+                        <!-- Navigation Arrow Shape -->
+                        <path d="M0,-15 L10,10 L0,5 L-10,10 Z" fill="#33ccff" stroke="#002C47" stroke-width="2" />
+                    </g>
+
                 </svg>
-
-
-
-
-
-
             </div>
+        </div>
     </section>
+
+    <script src="mapa.js"></script>
 </body>
 
 </html>
