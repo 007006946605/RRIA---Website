@@ -38,6 +38,83 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    // Store original and fullscreen positions for dynamic movement
+    const originalPositions = {
+        1: { x: 90, y: 60 },
+        2: { x: 710, y: 75 },
+        3: { x: 70, y: 530 },
+        4: { x: 730, y: 540 }
+    };
+
+    const fullscreenPositions = {
+        1: { x: 250, y: 150 },
+        2: { x: 550, y: 150 },
+        3: { x: 250, y: 450 },
+        4: { x: 550, y: 450 }
+    };
+
+    const originalRoutes = {
+        // Route 1: Center → Diagonal NW → Point 1
+        1: "M400,300 L350,250 L90,60",
+        // Route 2: Center → Diagonal NE → Point 2
+        2: "M400,300 L450,300 L710,75",
+        // Route 3: Center → Diagonal SW → Point 3
+        3: "M400,300 L350,250 L70,530",
+        // Route 4: Center → Diagonal SE → Point 4
+        4: "M400,300 L450,300 L730,540"
+    };
+
+    const fullscreenRoutes = {
+        // Route 1: Center → Up (Center St) → Left (Top St)
+        1: "M400,300 L400,150 L250,150",
+        // Route 2: Center → Up (Center St) → Right (Top St)
+        2: "M400,300 L400,150 L550,150",
+        // Route 3: Center → Down (Center St) → Left (Bottom St)
+        3: "M400,300 L400,450 L250,450",
+        // Route 4: Center → Down (Center St) → Right (Bottom St)
+        4: "M400,300 L400,450 L550,450"
+    };
+
+    // Function to smoothly move points to fullscreen positions
+    function movePointsToFullscreen() {
+        points.forEach(point => {
+            const id = point.getAttribute('data-id');
+            const newPos = fullscreenPositions[id];
+
+            // Add transition for smooth animation
+            point.style.transition = 'transform 0.5s ease-in-out';
+            point.setAttribute('transform', `translate(${newPos.x}, ${newPos.y})`);
+        });
+
+        // Update route paths
+        Object.keys(fullscreenRoutes).forEach(id => {
+            const routeElement = document.getElementById(`route-${id}`);
+            if (routeElement) {
+                routeElement.setAttribute('d', fullscreenRoutes[id]);
+            }
+        });
+    }
+
+    // Function to restore points to original positions
+    function restorePointsToNormal() {
+        points.forEach(point => {
+            const id = point.getAttribute('data-id');
+            const origPos = originalPositions[id];
+
+            // Add transition for smooth animation
+            point.style.transition = 'transform 0.5s ease-in-out';
+            point.setAttribute('transform', `translate(${origPos.x}, ${origPos.y})`);
+        });
+
+        // Restore original route paths
+        Object.keys(originalRoutes).forEach(id => {
+            const routeElement = document.getElementById(`route-${id}`);
+            if (routeElement) {
+                routeElement.setAttribute('d', originalRoutes[id]);
+            }
+        });
+    }
+
     points.forEach(point => {
         point.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -49,81 +126,82 @@ document.addEventListener('DOMContentLoaded', () => {
             popupTitle.textContent = sectionData[id].title;
             popupDesc.textContent = sectionData[id].desc;
 
-            const transform = point.getAttribute('transform');
-            const matches = transform.match(/translate\(([^,]+),\s*([^)]+)\)/);
+            // Reset popup to get dimensions
+            popup.className = '';
+            popup.style.display = 'block';
+            popup.style.transform = 'none';
 
-            if (matches) {
-                const x = parseFloat(matches[1]);
-                const y = parseFloat(matches[2]);
-
-                let leftPercent = (x / 800) * 100;
-                let topPercent = (y / 600) * 100;
-
-                // Reset popup
-                popup.className = '';
-                popup.style.display = 'block';
-
-                // Get popup dimensions
-                const popupRect = popup.getBoundingClientRect();
-                const mapRect = mapWrapper.getBoundingClientRect();
-                const popupWidth = popupRect.width;
-                const popupHeight = popupRect.height;
-
-                let isRight = false;
-                let tailClass = '';
-
-                // Determine horizontal positioning
-                if (leftPercent > 50) {
-                    // Position to the left of point
-                    popup.style.left = `${leftPercent}%`;
-                    popup.style.right = 'auto';
-                    popup.style.transform = `translate(calc(-100% - 20px), -50%)`;
-                    isRight = true; // tail будет справа от popup (указывает на точку)
-                } else {
-                    // Position to the right of point
-                    popup.style.left = `${leftPercent}%`;
-                    popup.style.right = 'auto';
-                    popup.style.transform = `translate(20px, -50%)`;
-                    isRight = false; // tail слева от popup
-                }
-
-                // Set vertical position
-                popup.style.top = `${topPercent}%`;
-
-                // Check if popup goes off screen vertically after positioning
-                const updatedRect = popup.getBoundingClientRect();
-
-                if (updatedRect.top < mapRect.top + 50) {
-                    // Position below the point
-                    popup.style.top = `${topPercent}%`;
-                    if (isRight) {
-                        popup.style.transform = `translate(calc(-100% - 20px), 20px)`;
-                    } else {
-                        popup.style.transform = `translate(20px, 20px)`;
-                    }
-                    tailClass = isRight ? 'tail-top-right' : 'tail-top-left';
-                } else if (updatedRect.bottom > mapRect.bottom - 20) {
-                    // Position above the point
-                    popup.style.top = `${topPercent}%`;
-                    if (isRight) {
-                        popup.style.transform = `translate(calc(-100% - 20px), calc(-100% - 20px))`;
-                    } else {
-                        popup.style.transform = `translate(20px, calc(-100% - 20px))`;
-                    }
-                    tailClass = isRight ? 'tail-bottom-right' : 'tail-bottom-left';
-                } else {
-                    // Default centered vertically
-                    tailClass = isRight ? 'tail-bottom-right' : 'tail-bottom-left';
-                }
-
-                // Add wide class for point 1
-                if (id === '1') {
-                    popup.classList.add('wide');
-                }
-
-                // Apply tail class
-                popup.classList.add(tailClass);
+            // Add wide class for point 1
+            if (id === '1') {
+                popup.classList.add('wide');
             }
+
+            // Get dimensions for precise positioning
+            const pointRect = point.getBoundingClientRect();
+            const mapRect = mapWrapper.getBoundingClientRect();
+            const popupRect = popup.getBoundingClientRect();
+
+            // Calculate point center relative to map wrapper
+            const pointCenterX = pointRect.left - mapRect.left + (pointRect.width / 2);
+            const pointCenterY = pointRect.top - mapRect.top + (pointRect.height / 2);
+
+            // Constants
+            const spacing = 15; // Space between point and popup
+            const tailOffset = 20; // Distance from edge to tail
+
+            // Logic to determine position (prioritize top, then bottom, then sides)
+            let top, left, tailClass;
+
+            // Check if fits on top
+            if (pointCenterY - popupRect.height - spacing > 0) {
+                // Position Top
+                top = pointCenterY - popupRect.height - spacing;
+
+                // Horizontal alignment (try center, then shift if needed)
+                if (pointCenterX + (popupRect.width / 2) < mapRect.width && pointCenterX - (popupRect.width / 2) > 0) {
+                    // Center horizontally
+                    left = pointCenterX - (popupRect.width / 2);
+                    tailClass = 'tail-bottom-center'; // We need to add this class or adjust existing
+                    // For now reusing existing logic, let's stick to left/right logic for tails
+                    // Actually, let's use the logic: if left side of map, popup goes right. If right side, popup goes left.
+                }
+            }
+
+            // SIMPLIFIED ROBUST LOGIC:
+            // Split map into quadrants to decide direction
+            const isLeftHalf = pointCenterX < mapRect.width / 2;
+            const isTopHalf = pointCenterY < mapRect.height / 2;
+
+            if (isTopHalf) {
+                // Point is in top half -> Popup goes BOTTOM
+                top = pointCenterY + spacing + (pointRect.height / 2);
+                if (isLeftHalf) {
+                    // Top-Left Quadrant -> Popup Bottom-Right relative to point (tail top-left)
+                    left = pointCenterX - tailOffset;
+                    tailClass = 'tail-top-left';
+                } else {
+                    // Top-Right Quadrant -> Popup Bottom-Left relative to point (tail top-right)
+                    left = pointCenterX - popupRect.width + tailOffset;
+                    tailClass = 'tail-top-right';
+                }
+            } else {
+                // Point is in bottom half -> Popup goes TOP
+                top = pointCenterY - popupRect.height - spacing - (pointRect.height / 2);
+                if (isLeftHalf) {
+                    // Bottom-Left Quadrant -> Popup Top-Right relative to point (tail bottom-left)
+                    left = pointCenterX - tailOffset;
+                    tailClass = 'tail-bottom-left';
+                } else {
+                    // Bottom-Right Quadrant -> Popup Top-Left relative to point (tail bottom-right)
+                    left = pointCenterX - popupRect.width + tailOffset;
+                    tailClass = 'tail-bottom-right';
+                }
+            }
+
+            // Apply calculated positions
+            popup.style.top = `${top}px`;
+            popup.style.left = `${left}px`;
+            popup.classList.add(tailClass);
         });
     });
 
@@ -219,6 +297,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Fullscreen
     const fullscreenBtn = document.getElementById('fullscreen-btn');
     const exitFullscreenBtn = document.getElementById('exit-fullscreen-btn');
+    const mainMap = document.getElementById('main-map');
 
     fullscreenBtn.addEventListener('click', () => {
         if (mapWrapper.requestFullscreen) {
@@ -244,9 +323,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (document.fullscreenElement) {
             fullscreenBtn.style.display = 'none';
             exitFullscreenBtn.style.display = 'inline-flex';
+            // Change preserveAspectRatio to fill the screen
+            mainMap.setAttribute('preserveAspectRatio', 'xMidYMid slice');
+            // Move points closer to center
+            movePointsToFullscreen();
         } else {
             fullscreenBtn.style.display = 'inline-flex';
             exitFullscreenBtn.style.display = 'none';
+            // Restore original preserveAspectRatio
+            mainMap.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+            // Restore points to original positions
+            restorePointsToNormal();
         }
     });
 
@@ -254,9 +341,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (document.webkitFullscreenElement) {
             fullscreenBtn.style.display = 'none';
             exitFullscreenBtn.style.display = 'inline-flex';
+            // Change preserveAspectRatio to fill the screen
+            mainMap.setAttribute('preserveAspectRatio', 'xMidYMid slice');
+            // Move points closer to center
+            movePointsToFullscreen();
         } else {
             fullscreenBtn.style.display = 'inline-flex';
             exitFullscreenBtn.style.display = 'none';
+            // Restore original preserveAspectRatio
+            mainMap.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+            // Restore points to original positions
+            restorePointsToNormal();
         }
     });
 });

@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Mapa Investigativo - RRIA</title>
+    <style>
+        :root {
+            --cor-destaque: #002C47;
+            --cor-popup-bg: #ffffff;
+            --cor-botao: #33ccff;
+            --cor-botao-hover: #00a3cc;
+        }
+
+        * {
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #e9ebee;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #002C47;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #map-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .map-point {
+            cursor: pointer;
+            transform-origin: center;
+            transition: opacity 0.2s;
+        }
+
+        .map-point:hover circle:first-child {
+            stroke: var(--cor-destaque);
+            stroke-width: 4px;
+        }
+
+        .car-marker {
+            pointer-events: none;
+            z-index: 10;
+            will-change: transform;
+        }
+
+        /* Popup */
+        #info-popup {
+            position: absolute;
+            width: 220px;
+            background-color: var(--cor-popup-bg);
+            padding: 15px;
+            border-radius: 12px;
+            padding-right: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 20;
+            display: none;
+        }
+
+        #info-popup.wide {
+            width: 280px;
+        }
+
+        #info-popup::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-style: solid;
+        }
+
+        .tail-bottom-left::after {
+            bottom: -10px;
+            left: 20px;
+            border-width: 10px 10px 0 10px;
+            border-color: var(--cor-popup-bg) transparent transparent transparent;
+        }
+
+        .tail-bottom-right::after {
+            bottom: -10px;
+            right: 20px;
+            border-width: 10px 10px 0 10px;
+            border-color: var(--cor-popup-bg) transparent transparent transparent;
+        }
+
+        .tail-top-left::after {
+            top: -10px;
+            left: 20px;
+            border-width: 0 10px 10px 10px;
+            border-color: transparent transparent var(--cor-popup-bg) transparent;
+        }
+
+        .tail-top-right::after {
+            top: -10px;
+            right: 20px;
+            border-width: 0 10px 10px 10px;
+            border-color: transparent transparent var(--cor-popup-bg) transparent;
+        }
+
+        #info-popup h4 {
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+            color: var(--cor-destaque);
+        }
+
+        #info-popup p {
+            font-size: 0.8rem;
+            color: #555;
+            margin-bottom: 12px;
+            line-height: 1.3;
+        }
+
+        #btn-fechar-popup {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: #999;
+            padding: 0 5px;
+            line-height: 1;
+        }
+
+        #btn-viajar {
+            width: 100%;
+            padding: 8px;
+            background-color: var(--cor-botao);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-size: 0.9rem;
+        }
+
+        #btn-viajar:hover {
+            background-color: var(--cor-botao-hover);
+        }
+
+        /* Arrival Overlay */
+        #arrival-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 44, 71, 0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            color: white;
+            z-index: 200;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s;
+            text-align: center;
+            padding: 20px;
+        }
+
+        #arrival-overlay.visible {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        #arrival-overlay h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            from {
+                transform: scale(0.5);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map-container">
+        <!-- Popup Info (Floating) -->
+        <div id="info-popup">
+            <button id="btn-fechar-popup">×</button>
+            <h4 id="popup-title">Título da Seção</h4>
+            <p id="popup-desc">Breve descrição sobre o que será encontrado nesta seção da investigação.</p>
+            <button id="btn-viajar">Viajar</button>
+        </div>
+
+        <!-- Arrival Overlay -->
+        <div id="arrival-overlay">
+            <h2>Você Chegou!</h2>
+            <p>Redirecionando para a seção...</p>
+        </div>
+
+        <svg viewBox="-100 0 1000 600" preserveAspectRatio="xMidYMid slice" id="main-map">
+            <defs>
+                <pattern id="grass" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+                    <rect width="20" height="20" fill="#cbe6a3" />
+                    <circle cx="5" cy="5" r="1.5" fill="#b5d685" />
+                </pattern>
+                <pattern id="building-pattern" x="0" y="0" width="10" height="10" patternUnits="userSpaceOnUse">
+                    <rect width="10" height="10" fill="#f0f2f5" />
+                    <rect x="0" y="0" width="9" height="9" fill="#e1e4e8" />
+                </pattern>
+            </defs>
+
+            <!-- Background Land -->
+            <rect width="800" height="600" fill="#e9ebee" />
+
+            <!-- Irregular Blocks/Buildings -->
+            <path d="M-10,-10 L350,-10 L300,200 L100,250 L-10,150 Z" fill="url(#building-pattern)" stroke="#ccc"
+                stroke-width="1" />
+            <path d="M450,-10 L810,-10 L810,150 L600,250 L450,150 Z" fill="url(#building-pattern)" stroke="#ccc"
+                stroke-width="1" />
+            <path d="M-10,250 L250,300 L200,500 L-10,610 Z" fill="url(#building-pattern)" stroke="#ccc"
+                stroke-width="1" />
+            <path d="M500,350 L810,250 L810,610 L400,610 L350,450 Z" fill="url(#building-pattern)" stroke="#ccc"
+                stroke-width="1" />
+            <path d="M380,-10 L420,-10 L420,100 L380,100 Z" fill="url(#building-pattern)" stroke="#ccc"
+                stroke-width="1" />
+            <path d="M50,300 L150,350 L100,450 L20,400 Z" fill="url(#building-pattern)" stroke="#ccc"
+                stroke-width="1" />
+            <path d="M650,300 L750,350 L700,450 L620,400 Z" fill="url(#building-pattern)" stroke="#ccc"
+                stroke-width="1" />
+
+            <!-- Random Buildings -->
+            <rect x="50" y="50" width="60" height="80" fill="#d1d5db" />
+            <rect x="150" y="30" width="100" height="60" fill="#d1d5db" />
+            <rect x="650" y="50" width="80" height="80" fill="#d1d5db" />
+            <rect x="50" y="400" width="100" height="100" fill="#d1d5db" />
+            <rect x="600" y="450" width="120" height="80" fill="#d1d5db" />
+            <rect x="300" y="50" width="50" height="50" fill="#d1d5db" />
+            <rect x="450" y="50" width="50" height="50" fill="#d1d5db" />
+
+            <!-- Parks -->
+            <path d="M280,400 L350,550 L450,550 L400,400 Z" fill="url(#grass)" />
+
+            <!-- Streets -->
+            <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M0,0 L350,250 L450,300 L800,600" stroke="#d6d6d6" stroke-width="28" />
+                <path d="M0,0 L350,250 L450,300 L800,600" stroke="#ffffff" stroke-width="24" />
+                <path d="M800,0 L450,300 L350,250 L0,600" stroke="#d6d6d6" stroke-width="28" />
+                <path d="M800,0 L450,300 L350,250 L0,600" stroke="#ffffff" stroke-width="24" />
+                <path d="M0,300 L800,300" stroke="#d6d6d6" stroke-width="24" />
+                <path d="M0,300 L800,300" stroke="#ffffff" stroke-width="20" />
+                <path d="M400,0 L400,600" stroke="#d6d6d6" stroke-width="24" />
+                <path d="M400,0 L400,600" stroke="#ffffff" stroke-width="20" />
+                <path d="M100,0 Q400,150 700,0" stroke="#d6d6d6" stroke-width="20" />
+                <path d="M100,0 Q400,150 700,0" stroke="#ffffff" stroke-width="16" />
+                <path d="M200,0 L200,600" stroke="#d6d6d6" stroke-width="16" />
+                <path d="M200,0 L200,600" stroke="#ffffff" stroke-width="12" />
+                <path d="M600,0 L600,600" stroke="#d6d6d6" stroke-width="16" />
+                <path d="M600,0 L600,600" stroke="#ffffff" stroke-width="12" />
+                <path d="M0,150 L800,150" stroke="#d6d6d6" stroke-width="16" />
+                <path d="M0,150 L800,150" stroke="#ffffff" stroke-width="12" />
+                <path d="M0,450 L800,450" stroke="#d6d6d6" stroke-width="16" />
+                <path d="M0,450 L800,450" stroke="#ffffff" stroke-width="12" />
+            </g>
+
+            <!-- Route Paths (Hidden) -->
+            <path id="route-1" d="M400,300 L350,250 L100,71" fill="none" stroke="none" />
+            <path id="route-2" d="M400,300 L450,300 L700,86" fill="none" stroke="none" />
+            <path id="route-3" d="M400,300 L350,250 L80,520" fill="none" stroke="none" />
+            <path id="route-4" d="M400,300 L450,300 L720,531" fill="none" stroke="none" />
+
+            <!-- Visible Route Line (STRONG PURPLE) -->
+            <path id="active-route" d="" stroke="#8b5cf6" stroke-width="8" fill="none" stroke-linecap="round"
+                stroke-linejoin="round" opacity="0.9" />
+
+            <!-- Start Point (Location Pin) -->
+            <g id="start-point" transform="translate(400, 300)">
+                <!-- Outer circle glow -->
+                <circle r="20" fill="rgba(51, 204, 255, 0.2)" />
+                <circle r="14" fill="rgba(51, 204, 255, 0.4)" />
+                <!-- Main pin circle -->
+                <circle r="10" fill="#33ccff" stroke="#fff" stroke-width="3" />
+                <!-- Inner white dot -->
+                <circle r="4" fill="#fff" />
+            </g>
+
+            <!-- Destinations with ! -->
+            <g class="map-point" data-id="1" transform="translate(90, 60)">
+                <circle r="15" fill="#ff5252" stroke="#fff" stroke-width="3" />
+                <text y="7" text-anchor="middle" fill="white" font-weight="bold" font-size="20">!</text>
+            </g>
+            <g class="map-point" data-id="2" transform="translate(710, 75)">
+                <circle r="15" fill="#ff5252" stroke="#fff" stroke-width="3" />
+                <text y="7" text-anchor="middle" fill="white" font-weight="bold" font-size="20">!</text>
+            </g>
+            <g class="map-point" data-id="3" transform="translate(70, 530)">
+                <circle r="15" fill="#ff5252" stroke="#fff" stroke-width="3" />
+                <text y="7" text-anchor="middle" fill="white" font-weight="bold" font-size="20">!</text>
+            </g>
+            <g class="map-point" data-id="4" transform="translate(730, 540)">
+                <circle r="15" fill="#ff5252" stroke="#fff" stroke-width="3" />
+                <text y="7" text-anchor="middle" fill="white" font-weight="bold" font-size="20">!</text>
+            </g>
+
+            <!-- Pointer Marker (Arrow) -->
+            <g id="car-marker" class="car-marker" transform="translate(400, 300) scale(0)">
+                <path d="M0,-15 L10,10 L0,5 L-10,10 Z" fill="#33ccff" stroke="#002C47" stroke-width="2" />
+            </g>
+
+        </svg>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const points = document.querySelectorAll('.map-point');
+            const popup = document.getElementById('info-popup');
+            const btnFechar = document.getElementById('btn-fechar-popup');
+            const btnViajar = document.getElementById('btn-viajar');
+            const popupTitle = document.getElementById('popup-title');
+            const popupDesc = document.getElementById('popup-desc');
+            const activeRoutePath = document.getElementById('active-route');
+            const carMarker = document.getElementById('car-marker');
+            const arrivalOverlay = document.getElementById('arrival-overlay');
+            const mapContainer = document.getElementById('map-container');
+            const mainMap = document.getElementById('main-map');
+
+            let selectedDestinationId = null;
+            let isTraveling = false;
+
+            // Dynamic viewBox adjustment - like Waze, shows more map area on widescreen
+            function adjustViewBox() {
+                const containerWidth = mapContainer.clientWidth;
+                const containerHeight = mapContainer.clientHeight;
+                const screenRatio = containerWidth / containerHeight;
+
+                // Original map center and dimensions
+                const centerX = 400;
+                const centerY = 300;
+                const baseWidth = 800;
+                const baseHeight = 600;
+                const mapRatio = baseWidth / baseHeight; // 4:3 = 1.333
+
+                let viewBoxWidth, viewBoxHeight;
+
+                if (screenRatio > mapRatio) {
+                    // Screen is wider than map (e.g., 16:9) - expand horizontally
+                    viewBoxHeight = baseHeight;
+                    viewBoxWidth = baseHeight * screenRatio;
+                } else {
+                    // Screen is taller than map - expand vertically
+                    viewBoxWidth = baseWidth;
+                    viewBoxHeight = baseWidth / screenRatio;
+                }
+
+                // Center the viewBox
+                const viewBoxX = centerX - (viewBoxWidth / 2);
+                const viewBoxY = centerY - (viewBoxHeight / 2);
+
+                mainMap.setAttribute('viewBox', `${viewBoxX} ${viewBoxY} ${viewBoxWidth} ${viewBoxHeight}`);
+            }
+
+            // Adjust on load and resize
+            adjustViewBox();
+            window.addEventListener('resize', adjustViewBox);
+
+            const sectionData = {
+                1: {
+                    title: "Seção 1: Coleta de Dados",
+                    desc: "Descubra como os dados de tráfego são coletados em tempo real.",
+                    url: "secao1.html"
+                },
+                2: {
+                    title: "Seção 2: Processamento",
+                    desc: "Entenda como os algoritmos processam milhões de dados.",
+                    url: "secao2.html"
+                },
+                3: {
+                    title: "Seção 3: Roteamento",
+                    desc: "Veja como o melhor caminho é calculado.",
+                    url: "secao3.html"
+                },
+                4: {
+                    title: "Seção 4: Comunidade",
+                    desc: "O papel da comunidade na atualização dos mapas.",
+                    url: "secao4.html"
+                }
+            };
+
+            points.forEach(point => {
+                point.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (isTraveling) return;
+
+                    const id = point.getAttribute('data-id');
+                    selectedDestinationId = id;
+
+                    popupTitle.textContent = sectionData[id].title;
+                    popupDesc.textContent = sectionData[id].desc;
+
+                    const transform = point.getAttribute('transform');
+                    const matches = transform.match(/translate\(([^,]+),\s*([^)]+)\)/);
+
+                    if (matches) {
+                        const x = parseFloat(matches[1]);
+                        const y = parseFloat(matches[2]);
+
+                        let leftPercent = (x / 800) * 100;
+                        let topPercent = (y / 600) * 100;
+
+                        // Reset popup
+                        popup.className = '';
+                        popup.style.display = 'block';
+
+                        // Get popup dimensions
+                        const popupRect = popup.getBoundingClientRect();
+                        const mapRect = mapContainer.getBoundingClientRect();
+
+                        let isRight = false;
+                        let tailClass = '';
+
+                        // Determine horizontal positioning
+                        if (leftPercent > 50) {
+                            popup.style.left = `${leftPercent}%`;
+                            popup.style.right = 'auto';
+                            popup.style.transform = `translate(calc(-100% - 20px), -50%)`;
+                            isRight = true;
+                        } else {
+                            popup.style.left = `${leftPercent}%`;
+                            popup.style.right = 'auto';
+                            popup.style.transform = `translate(20px, -50%)`;
+                            isRight = false;
+                        }
+
+                        // Set vertical position
+                        popup.style.top = `${topPercent}%`;
+
+                        // Check if popup goes off screen vertically after positioning
+                        const updatedRect = popup.getBoundingClientRect();
+
+                        if (updatedRect.top < mapRect.top + 50) {
+                            popup.style.top = `${topPercent}%`;
+                            if (isRight) {
+                                popup.style.transform = `translate(calc(-100% - 20px), 20px)`;
+                            } else {
+                                popup.style.transform = `translate(20px, 20px)`;
+                            }
+                            tailClass = isRight ? 'tail-top-right' : 'tail-top-left';
+                        } else if (updatedRect.bottom > mapRect.bottom - 20) {
+                            popup.style.top = `${topPercent}%`;
+                            if (isRight) {
+                                popup.style.transform = `translate(calc(-100% - 20px), calc(-100% - 20px))`;
+                            } else {
+                                popup.style.transform = `translate(20px, calc(-100% - 20px))`;
+                            }
+                            tailClass = isRight ? 'tail-bottom-right' : 'tail-bottom-left';
+                        } else {
+                            tailClass = isRight ? 'tail-bottom-right' : 'tail-bottom-left';
+                        }
+
+                        // Add wide class for point 1
+                        if (id === '1') {
+                            popup.classList.add('wide');
+                        }
+
+                        // Apply tail class
+                        popup.classList.add(tailClass);
+                    }
+                });
+            });
+
+            btnFechar.addEventListener('click', (e) => {
+                e.stopPropagation();
+                popup.style.display = 'none';
+                selectedDestinationId = null;
+            });
+
+            mapContainer.addEventListener('click', () => {
+                if (isTraveling) return;
+                popup.style.display = 'none';
+            });
+
+            popup.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+
+            btnViajar.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (!selectedDestinationId) return;
+
+                isTraveling = true;
+                popup.style.display = 'none';
+
+                const routeId = `route-${selectedDestinationId}`;
+                const routeElement = document.getElementById(routeId);
+                const pathData = routeElement.getAttribute('d');
+
+                activeRoutePath.setAttribute('d', pathData);
+
+                const length = activeRoutePath.getTotalLength();
+                activeRoutePath.style.strokeDasharray = length;
+                activeRoutePath.style.strokeDashoffset = length;
+
+                activeRoutePath.getBoundingClientRect();
+
+                activeRoutePath.style.transition = 'stroke-dashoffset 1.5s ease-in-out';
+                activeRoutePath.style.strokeDashoffset = '0';
+
+                setTimeout(() => {
+                    animatePointer(routeElement);
+                }, 1500);
+            });
+
+            function animatePointer(routePath) {
+                carMarker.style.transition = 'none';
+
+                const length = routePath.getTotalLength();
+                const duration = 2500;
+                const startTime = performance.now();
+
+                function step(currentTime) {
+                    const elapsed = currentTime - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+
+                    const point = routePath.getPointAtLength(progress * length);
+
+                    let angle = 0;
+                    if (progress < 0.95) {
+                        const nextPoint = routePath.getPointAtLength((progress + 0.05) * length);
+                        const dx = nextPoint.x - point.x;
+                        const dy = nextPoint.y - point.y;
+                        angle = (Math.atan2(dy, dx) * 180 / Math.PI) + 90;
+                    } else {
+                        const prevPoint = routePath.getPointAtLength((progress - 0.05) * length);
+                        const dx = point.x - prevPoint.x;
+                        const dy = point.y - prevPoint.y;
+                        angle = (Math.atan2(dy, dx) * 180 / Math.PI) + 90;
+                    }
+
+                    carMarker.setAttribute('transform', `translate(${point.x}, ${point.y}) rotate(${angle}) scale(0.8)`);
+
+                    if (progress < 1) {
+                        requestAnimationFrame(step);
+                    } else {
+                        showArrival();
+                    }
+                }
+
+                requestAnimationFrame(step);
+            }
+
+            function showArrival() {
+                arrivalOverlay.classList.add('visible');
+
+                setTimeout(() => {
+                    const url = sectionData[selectedDestinationId].url;
+                    window.location.href = url;
+                }, 2000);
+            }
+        });
+    </script>
+</body>
+
+</html>
