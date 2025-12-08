@@ -1,0 +1,386 @@
+:root {
+    --bg-page: #fdfdfd;
+    --text-main: #1a1a1a;
+    --text-muted: #666;
+    --primary: #002C47;
+    --accent: #5a99d4;
+
+    /* Card Colors */
+    --card-1-bg: #ffe5e5;
+    --card-2-bg: #fff6d1;
+    --card-3-bg: #e8f3ff;
+    --card-4-bg: #e9ffe5;
+
+    --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    --card-hover-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+
+    --header-height: 70px;
+    --footer-height: 40px;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', sans-serif;
+    color: var(--text-main);
+    background-color: var(--bg-page);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* --- LAYOUT STRUCTURE --- */
+.page-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+    box-sizing: border-box;
+}
+
+/* Header handled by shared-header.css */
+.ops-header {
+    flex-shrink: 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+main.content-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Center content vertically */
+    padding-bottom: 20px;
+}
+
+/* --- TITLES --- */
+.intro-section {
+    text-align: center;
+    margin-bottom: 32px;
+    margin-top: 20px;
+    animation: fadeInDown 0.6s ease-out;
+}
+
+.intro-section h1 {
+    font-size: clamp(1.5rem, 2.5vw, 2.2rem);
+    margin: 0 0 8px 0;
+    color: var(--primary);
+}
+
+.intro-section p {
+    font-size: clamp(0.9rem, 1.2vw, 1.1rem);
+    color: var(--text-muted);
+    margin: 0;
+}
+
+/* --- CARDS GRID --- */
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: auto;
+    gap: 24px;
+    width: 100%;
+    margin-bottom: 24px;
+    padding: 4px; /* Space for shadow */
+}
+
+.psych-card {
+    background: #f9f9f9;
+    border-radius: 16px;
+    padding: 24px;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    border: 1px solid #eee;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    min-height: 160px; /* Minimum reasonable height */
+
+    /* Animation Initial State */
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+.psych-card:hover {
+    box-shadow: var(--card-hover-shadow);
+    transform: translateY(-2px);
+    z-index: 2;
+}
+
+.psych-card.active {
+    transform: scale(1.03);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.12);
+    border-color: transparent;
+    z-index: 10;
+    justify-content: flex-start; /* Move content to top when active */
+    padding-top: 32px;
+}
+
+/* Icons */
+.card-icon {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 16px;
+    transition: transform 0.3s;
+    flex-shrink: 0;
+}
+
+.card-icon svg {
+    width: 100%;
+    height: 100%;
+}
+
+.psych-card.active .card-icon {
+    transform: scale(0.9);
+    margin-bottom: 8px;
+}
+
+/* Text inside Trigger Cards */
+.card-title {
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+    color: var(--primary);
+    transition: all 0.3s;
+}
+
+/* Glass Mini-Panel inside Card */
+.card-content {
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 12px;
+    width: 100%;
+    box-sizing: border-box;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    
+    /* Animation Initial State */
+    opacity: 0;
+    transform: translateY(10px);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    transition: all 0.3s ease-out;
+}
+
+.psych-card.active .card-content {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.card-typing-text {
+    font-size: 0.9rem;
+    color: #1a1a1a;
+    margin: 0 0 16px 0;
+    line-height: 1.5;
+    min-height: 3em; /* Reserve space */
+    font-weight: 500;
+}
+
+/* Blinking Cursor Effect */
+.cursor {
+    display: inline-block;
+    width: 2px;
+    height: 1.2em;
+    background-color: var(--primary);
+    margin-left: 2px;
+    vertical-align: sub;
+    animation: blink 0.8s infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+.card-mini-btn {
+    background: transparent;
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 600;
+    align-self: flex-start;
+}
+
+.card-mini-btn:hover {
+    background: var(--primary);
+    color: #fff;
+}
+
+/* --- BOTTOM CONTROLS --- */
+.bottom-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 0;
+    flex-shrink: 0;
+}
+
+.btn-read-more {
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    padding: 12px 32px;
+    font-size: 1rem;
+    border-radius: 50px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s, transform 0.2s;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 10px rgba(0, 44, 71, 0.2);
+}
+
+.btn-read-more:hover {
+    background: #004466;
+    transform: translateY(-2px);
+}
+
+/* Conclusion Animation */
+#conclusion {
+    height: 24px;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    font-style: italic;
+    opacity: 0.8;
+}
+
+.type-text {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+/* --- FULL TEXT OVERLAY (COLLAPSIBLE) --- */
+.full-analysis-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.98);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    backdrop-filter: blur(8px);
+}
+
+.full-analysis-container.open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.analysis-content {
+    max-width: 800px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    background: #fff;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+    position: relative;
+    transform: translateY(20px);
+    transition: transform 0.4s ease-out;
+}
+
+.full-analysis-container.open .analysis-content {
+    transform: translateY(0);
+}
+
+.btn-close-analysis {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--text-muted);
+    padding: 8px;
+    border-radius: 50%;
+    transition: background 0.2s;
+}
+
+.btn-close-analysis:hover {
+    background: #f0f0f0;
+}
+
+article.text-body {
+    font-size: 1.05rem;
+    line-height: 1.8;
+    color: #333;
+}
+
+article.text-body p {
+    margin-bottom: 24px;
+}
+
+/* --- ANIMATIONS --- */
+@keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* --- MOBILE RESPONSIVE --- */
+@media (max-width: 768px) {
+    body {
+        height: auto;
+        overflow-y: auto;
+    }
+
+    .page-container {
+        height: auto;
+        padding-bottom: 40px;
+    }
+
+    main.content-area {
+        overflow: visible;
+        padding-top: 20px;
+        justify-content: flex-start;
+    }
+
+    .cards-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+        gap: 16px;
+    }
+
+    .psych-card {
+        min-height: 120px;
+    }
+    
+    .psych-card.active {
+        transform: scale(1.02);
+    }
+    
+    .psych-card.active .card-content {
+        margin-top: 16px;
+    }
+
+    .intro-section h1 {
+        font-size: 1.8rem;
+    }
+}

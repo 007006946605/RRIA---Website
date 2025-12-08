@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
         4: {
             title: "Psicologia do Usuário",
             desc: "Veja como emoções influenciam a tomada de decisão no app.",
-            url: "secao4.html"
+            url: "paginas/html/psicologiaUsuario.html"
         }
 
     };

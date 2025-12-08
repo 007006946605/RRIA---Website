@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Psicologia do Usuário - RRIA</title>
+    <link rel="stylesheet" href="../css/psicologiaUsuario.css">
+    <link rel="stylesheet" href="../css/shared-header.css">
+    <link rel="stylesheet" href="../css/pageTransitions.css">
+
+    <!-- Fonte Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+</head>
+
+<body>
+    <script src="../js/pageTransitions.js"></script>
+
+    <!-- Header (Shared Structure) - Full Width -->
+    <header class="ops-header">
+        <div class="header-content">
+            <div class="header-title">
+                <h1>Psicologia do Usuário</h1>
+                <p>Análise de Impacto Comportamental</p>
+            </div>
+
+            <button onclick="window.location.href='../../mapa.html'"
+                style="background:none; border:none; cursor:pointer; color:#666;">
+                <span class="material-icons-round">arrow_back</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="page-container">
+
+        <main class="content-area">
+
+            <div class="intro-section">
+                <h1>Fatores de Engajamento</h1>
+                <p>Como o design influencia decisões e mantém o usuário conectado.</p>
+            </div>
+
+            <!-- Grid de Cards Interativos -->
+            <article class="cards-grid">
+
+                <!-- CARD 1 -->
+                <div class="psych-card" id="card-1" data-color="#ffe5e5"
+                    data-microtext="O usuário busca alívio imediato ao evitar atrasos.">
+                    <div class="card-icon">
+                        <!-- Clock SVG -->
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="12" cy="12" r="9" stroke="#002C47" stroke-width="2" />
+                            <path d="M12 6V12L16 14" stroke="#002C47" stroke-width="2" stroke-linecap="round" />
+                        </svg>
+                    </div>
+                    <div class="card-title">Ansiedade e Tempo</div>
+                </div>
+
+                <!-- CARD 2 -->
+                <div class="psych-card" id="card-2" data-color="#fff6d1"
+                    data-microtext="Notificações inesperadas criam pequenas doses de recompensa.">
+                    <div class="card-icon">
+                        <!-- Gift/Star SVG -->
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
+                                stroke="#002C47" stroke-width="2" stroke-linejoin="round" />
+                        </svg>
+                    </div>
+                    <div class="card-title">Recompensa Variável</div>
+                </div>
+
+                <!-- CARD 3 -->
+                <div class="psych-card" id="card-3" data-color="#e8f3ff"
+                    data-microtext="O sistema assume decisões difíceis para reduzir o esforço mental.">
+                    <div class="card-icon">
+                        <!-- Brain SVG -->
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M9.5 2C11 2 12.5 3 13 4C14 2 16.5 2 18 4C20 6.5 19 11 17 12V14C17 16 16 20 12 20C8 20 7 16 7 14V12C5 11 4 6.5 6 4C7.5 2 9.5 2 9.5 2Z"
+                                stroke="#002C47" stroke-width="2" />
+                            <path d="M12 14V18" stroke="#002C47" stroke-width="2" />
+                            <path d="M9 12H15" stroke="#002C47" stroke-width="2" />
+                        </svg>
+                    </div>
+                    <div class="card-title">Carga Cognitiva</div>
+                </div>
+
+                <!-- CARD 4 -->
+                <div class="psych-card" id="card-4" data-color="#e9ffe5"
+                    data-microtext="A confiança aumenta quando a informação vem de outros motoristas.">
+                    <div class="card-icon">
+                        <!-- Network SVG -->
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="6" cy="18" r="3" stroke="#002C47" stroke-width="2" />
+                            <circle cx="18" cy="6" r="3" stroke="#002C47" stroke-width="2" />
+                            <circle cx="18" cy="18" r="3" stroke="#002C47" stroke-width="2" />
+                            <path d="M8.5 16.5L15.5 8.5" stroke="#002C47" stroke-width="2" />
+                            <path d="M18 9V15" stroke="#002C47" stroke-width="2" />
+                            <path d="M9 18H15" stroke="#002C47" stroke-width="2" />
+                        </svg>
+                    </div>
+                    <div class="card-title">Pertencimento Social</div>
+                </div>
+
+            </article>
+
+            <!-- Bottom Action -->
+            <div class="bottom-controls">
+                <button id="btn-read-more" class="btn-read-more">Ler análise completa</button>
+                <div id="conclusion">Analisando dados...</div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Full Text Overlay -->
+    <div id="full-analysis-overlay" class="full-analysis-container">
+        <div class="analysis-content">
+            <button id="btn-close-analysis" class="btn-close-analysis">
+                <span class="material-icons-round">close</span>
+            </button>
+            <article class="text-body">
+                <h2>Por que o cálculo e recálculo de rotas funciona tão bem?</h2>
+
+                <p>O Waze se apoia em diversos gatilhos psicológicos que mantêm o usuário altamente engajado e
+                    dependente da ferramenta. O primeiro e mais evidente é a ansiedade ligada ao tempo: ninguém gosta de
+                    ficar preso em congestionamentos ou correr o risco de se atrasar. Ao oferecer atualizações
+                    constantes, recalcular rotas automaticamente e avisar sobre imprevistos antes que o motorista os
+                    encontre, o app reduz a sensação de incerteza e devolve ao usuário a ilusão de controle total sobre
+                    o trajeto. Isso cria segurança emocional e torna o uso do app quase obrigatório para quem dirige em
+                    grandes cidades.</p>
+
+                <p>O sistema também opera com um forte elemento de recompensa variável, semelhante ao funcionamento de
+                    jogos e máquinas caça-níqueis. A qualquer instante, o usuário pode receber uma notificação dizendo
+                    que uma nova rota mais rápida foi encontrada ou que houve um ganho inesperado de alguns minutos no
+                    tempo total. Esse tipo de surpresa positiva ativa o circuito de dopamina, reforçando o comportamento
+                    de continuar usando o app sempre que for sair de carro. Como essas recompensas são imprevisíveis —
+                    às vezes aparecem, às vezes não — o cérebro fica ainda mais condicionado a checar e confiar no Waze.
+                </p>
+
+                <p>Outro ponto essencial é o gatilho da redução de carga cognitiva. Navegar pela cidade, interpretar
+                    placas, decidir o melhor caminho e lidar com trânsito já exige bastante esforço mental. O Waze
+                    elimina praticamente todas essas tarefas, assumindo o papel de “cérebro auxiliar” do motorista.
+                    Psicologicamente, quando uma tecnologia facilita tanto uma atividade difícil, ela cria um ciclo de
+                    dependência por conveniência: o usuário passa a sentir que dirigir sem o aplicativo é arriscado,
+                    desconfortável ou até irresponsável. Assim, o app não apenas ajuda — ele se torna parte integral da
+                    experiência de dirigir.</p>
+
+                <p>Por fim, o Waze também aproveita o elemento de pertencimento social, já que grande parte dos dados
+                    vêm da colaboração dos próprios usuários. A sensação de que “motoristas reais estão me ajudando
+                    agora” aumenta a confiança no sistema e faz o usuário sentir-se parte de uma comunidade. Em
+                    conjunto, esses elementos criam uma experiência altamente envolvente, eficiente e psicologicamente
+                    poderosa, explicando por que o cálculo de rotas do Waze funciona tão bem e se tornou indispensável
+                    para milhões de pessoas.</p>
+            </article>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../js/psicologiaUsuario.js"></script>
+
+</body>
+
+</html>
