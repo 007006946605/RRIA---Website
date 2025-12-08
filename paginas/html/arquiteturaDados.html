@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arquitetura de Dados - RRIA</title>
+    <link rel="stylesheet" href="../css/arquiteturaDados.css">
+    <!-- Fonte Inter para visual mais profissional -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <header class="header">
+            <h1>Arquitetura de Dados</h1>
+            <p class="subtitle">Explore a estrutura de dados do sistema de rotas em tempo real</p>
+        </header>
+
+        <div class="main-content">
+            <!-- Mapa Interativo -->
+            <div class="card map-container">
+                <h3 class="card-title">
+                    <svg class="card-icon" viewBox="0 0 24 24">
+                        <path
+                            d="M12,11.5A2.5,2.5 0 0,1 9.5,9A2.5,2.5 0 0,1 12,6.5A2.5,2.5 0 0,1 14.5,9A2.5,2.5 0 0,1 12,11.5M12,2A7,7 0 0,0 5,9C5,14.25 12,22 12,22C12,22 19,14.25 19,9A7,7 0 0,0 12,2Z" />
+                    </svg>
+                    Mapa de Investigação
+                </h3>
+                <div class="map-wrapper">
+                    <svg viewBox="0 0 800 600" id="data-map">
+                        <rect width="800" height="600" fill="#f0f4f8" />
+
+                        <!-- Grid de fundo -->
+                        <defs>
+                            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#d1dce6" stroke-width="0.5" />
+                            </pattern>
+                        </defs>
+                        <rect width="800" height="600" fill="url(#grid)" />
+
+                        <!-- Ruas Grid 3x3 -->
+                        <g fill="none" stroke-linecap="round">
+                            <!-- Horizontais (Y: 150, 300, 450) -->
+                            <path d="M50,150 L750,150" stroke="#ced4da" stroke-width="24" />
+                            <path d="M50,150 L750,150" stroke="#ffffff" stroke-width="20" />
+
+                            <path d="M50,300 L750,300" stroke="#ced4da" stroke-width="24" />
+                            <path d="M50,300 L750,300" stroke="#ffffff" stroke-width="20" />
+
+                            <path d="M50,450 L750,450" stroke="#ced4da" stroke-width="24" />
+                            <path d="M50,450 L750,450" stroke="#ffffff" stroke-width="20" />
+
+                            <!-- Verticais (X: 200, 400, 600) -->
+                            <path d="M200,100 L200,500" stroke="#ced4da" stroke-width="20" />
+                            <path d="M200,100 L200,500" stroke="#ffffff" stroke-width="16" />
+
+                            <path d="M400,100 L400,500" stroke="#ced4da" stroke-width="20" />
+                            <path d="M400,100 L400,500" stroke="#ffffff" stroke-width="16" />
+
+                            <path d="M600,100 L600,500" stroke="#ced4da" stroke-width="20" />
+                            <path d="M600,100 L600,500" stroke="#ffffff" stroke-width="16" />
+                        </g>
+
+                        <!-- Rota Estática: Início (L3,C1) -> Fim (L1,C3) -->
+                        <path d="M100,450 L600,450 L600,150 L700,150" stroke="#7c3aed" stroke-width="6" fill="none"
+                            stroke-linecap="round" stroke-linejoin="round" opacity="0.85" />
+
+                        <!-- Ponto de Origem (L3, C1 - Esq) -->
+                        <g id="start-point" transform="translate(100, 450)">
+                            <circle r="16" fill="rgba(40, 200, 64, 0.2)" />
+                            <circle r="10" fill="rgba(40, 200, 64, 0.4)" />
+                            <circle r="6" fill="#28c840" stroke="#fff" stroke-width="2" />
+                            <text y="32" text-anchor="middle" fill="#28c840" font-size="10"
+                                font-weight="600">INÍCIO</text>
+                        </g>
+
+                        <!-- Ponto Final (L1, C3 - Dir) -->
+                        <g id="end-point" transform="translate(700, 150)">
+                            <circle r="16" fill="rgba(244, 67, 54, 0.2)" />
+                            <circle r="10" fill="rgba(244, 67, 54, 0.4)" />
+                            <circle r="6" fill="#f44336" stroke="#fff" stroke-width="2" />
+                            <text y="32" text-anchor="middle" fill="#f44336" font-size="10"
+                                font-weight="600">DESTINO</text>
+                        </g>
+
+                        <!-- Evento Perigo Único (L1, C2 - Encruzilhada) -->
+                        <g class="event-marker-group" data-event="acidente" transform="translate(400, 150)">
+                            <g class="event-marker-content">
+                                <circle r="24" fill="rgba(231, 76, 60, 0.15)" />
+                                <circle r="20" fill="#e74c3c" opacity="0.9" />
+                                <svg viewBox="0 0 24 24" x="-10" y="-10" width="20" height="20">
+                                    <path fill="white"
+                                        d="M12,2L1,21H23M12,6L19.53,19H4.47M11,10V14H13V10M11,16V18H13V16" />
+                                </svg>
+                            </g>
+                        </g>
+                    </svg>
+                </div>
+                <p
+                    style="text-align: center; margin-top: 12px; font-size: 0.85rem; color: var(--cor-texto-muted); display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <svg style="width:16px;height:16px;fill:currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M10,21V19H6.41L10.41,15H5V5H19V15H13.59L17.59,19H14V21H10M12,23C12,23 16,21 16,16.5C16,14 14,12 12,12C10,12 8,14 8,16.5C8,21 12,23 12,23Z" />
+                    </svg>
+                    Clique nos eventos para investigar
+                </p>
+            </div>
+
+            <!-- Painel de Informações -->
+            <div>
+                <div class="card">
+                    <h3 class="card-title">
+                        <svg class="card-icon" viewBox="0 0 24 24">
+                            <path
+                                d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+                        </svg>
+                        Exploração Ativa
+                    </h3>
+                    <div class="info-panel">
+                        <h3>
+                            <svg style="width:18px;height:18px;fill:currentColor;margin-right:8px;vertical-align:bottom"
+                                viewBox="0 0 24 24">
+                                <path
+                                    d="M15.5,14L20.5,19L19,20.5L14,15.5V14.71L13.73,14.43C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.43,13.73L14.71,14H15.5M9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14Z" />
+                            </svg>
+                            Modo de Investigação
+                        </h3>
+                        <p>Clique em qualquer evento no mapa para ativar:</p>
+                        <ul style="margin-top: 8px; padding-left: 20px; font-size: 0.875rem; list-style-type: none;">
+                            <li style="margin-bottom: 6px; display: flex; align-items: center; gap: 8px;">
+                                <svg style="width:14px;height:14px;fill:var(--cor-destaque)" viewBox="0 0 24 24">
+                                    <path
+                                        d="M9,2A7,7 0 0,1 16,9C16,10.57 15.5,12 14.61,13.19L15.41,14H16L22,20L20,22L14,16V15.41L13.19,14.61C12,15.5 10.57,16 9,16A7,7 0 0,1 2,9A7,7 0 0,1 9,2M9,4A5,5 0 0,0 4,9A5,5 0 0,0 9,14A5,5 0 0,0 14,9A5,5 0 0,0 9,4Z" />
+                                </svg>
+                                <strong>Lupa Forense (2×)</strong> — Ampliação detalhada
+                            </li>
+                            <li style="margin-bottom: 6px; display: flex; align-items: center; gap: 8px;">
+                                <svg style="width:14px;height:14px;fill:var(--cor-destaque)" viewBox="0 0 24 24">
+                                    <path
+                                        d="M13,9H18.5L13,3.5V9M6,2H14L20,8V20A2,2 0 0,1 18,22H6C4.89,22 4,21.1 4,20V4C4,2.89 4.89,2 6,2M7,20H9V18H7V20M11,20H13V18H11V20M15,20H17V18H15V20M7,16H9V14H7V16M11,16H13V14H11V16M15,16H17V14H15V16M7,12H9V10H7V12M11,12H13V10H11V12M15,12H17V10H15V12Z" />
+                                </svg>
+                                <strong>Painel Raio-X</strong> — Dados do banco
+                            </li>
+                            <li style="display: flex; align-items: center; gap: 8px;">
+                                <svg style="width:14px;height:14px;fill:var(--cor-destaque)" viewBox="0 0 24 24">
+                                    <path
+                                        d="M22,13V19H21L19,17V13H22M3,17H5V13H3V17M13,22H9V18L11,16L13,18V22M15,12V9H19L17,11L15,9V12M11,12V9L9,11L7,9V12H11M11,7V4H9L11,2L13,4H11V7Z" />
+                                </svg>
+                                <strong>Relações Visuais</strong> — Conexões entre tabelas
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" id="btn-show-der">
+                            <svg style="width:20px;height:20px;fill:white" viewBox="0 0 24 24">
+                                <path
+                                    d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M9,17H7V10H9V17M13,17H11V7H13V17M17,17H15V13H17V17Z" />
+                            </svg>
+                            <span>Mostrar Toda Arquitetura</span>
+                        </button>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="btn btn-secondary" id="btn-clear">
+                            <svg style="width:20px;height:20px;fill:white" viewBox="0 0 24 24">
+                                <path
+                                    d="M19.36,2.72L20.78,4.14L15.06,9.85C16.13,11.39 16.28,13.24 15.38,14.44L9.06,8.12C10.26,7.22 12.11,7.37 13.65,8.44L19.36,2.72M5.93,17.57C3.92,15.56 2.69,13.16 2.35,10.92L7.23,8.83L14.67,16.27L12.58,21.15C10.34,20.81 7.94,19.58 5.93,17.57Z" />
+                            </svg>
+                            <span>Limpar Simulação</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DER Completo (SVG desenhado manualmente) -->
+        <div id="der-container" class="der-container">
+            <h2 class="der-title">
+                <svg style="width:24px;height:24px;fill:currentColor;vertical-align:middle;margin-right:8px;"
+                    viewBox="0 0 24 24">
+                    <path
+                        d="M12,5H17.5L12,0.5V5M5,2H10.1C10,2 10.12,2 10.2,2H13V7H18V18L12,22L6,18V13.84L7,15.22V17.38L12,20.73L17,17.38V8H11V3.5L6,8.5V11.16L5,9.79V7C5,5.89 5.89,5 7,5H7.1L5,2M19,10V18L21.46,16.35L20.57,15L19,16V10H19Z" />
+                </svg>
+                Diagrama Entidade-Relacionamento (DER)
+            </h2>
+
+            <div class="der-svg-wrapper" style="width:100%; overflow-x:auto; padding: 20px 0;">
+                <svg viewBox="0 0 1000 700" width="1000" height="700"
+                    style="background:white; border-radius:8px; display:block; margin:auto;">
+
+                    <defs>
+                        <style>
+                            .entity-box {
+                                fill: #ffffff;
+                                stroke: #333;
+                                stroke-width: 2;
+                            }
+
+                            .entity-text {
+                                font-weight: bold;
+                                font-family: 'Inter', sans-serif;
+                                font-size: 14px;
+                                text-anchor: middle;
+                            }
+
+                            .relation-shape {
+                                fill: #ffffff;
+                                stroke: #333;
+                                stroke-width: 2;
+                            }
+
+                            .relation-text {
+                                font-family: 'Inter', sans-serif;
+                                font-size: 11px;
+                                text-anchor: middle;
+                                font-weight: 600;
+                            }
+
+                            /* Atributos */
+                            .attr-path {
+                                fill: none;
+                                stroke: #333;
+                                stroke-width: 1;
+                            }
+
+                            .attr-circle {
+                                fill: #fff;
+                                stroke: #333;
+                                stroke-width: 1;
+                            }
+
+                            .attr-circle-pk {
+                                fill: #000;
+                                stroke: #000;
+                                stroke-width: 1;
+                            }
+
+                            .attr-text {
+                                font-family: 'Inter', sans-serif;
+                                font-size: 11px;
+                                fill: #333;
+                            }
+
+                            /* Linhas */
+                            .conn-line {
+                                stroke: #333;
+                                stroke-width: 1.5;
+                                fill: none;
+                            }
+
+                            .cardinality {
+                                font-size: 11px;
+                                font-family: 'Inter', sans-serif;
+                                background: #fff;
+                            }
+
+                            /* Ajuste estilo para papéis */
+                            .role-text {
+                                font-size: 10px;
+                                font-family: 'Inter', sans-serif;
+                                fill: #555;
+                            }
+
+                            .card-box {
+                                fill: white;
+                                stroke: #ddd;
+                                stroke-width: 1;
+                            }
+
+                            .card-text {
+                                font-size: 10px;
+                                font-family: 'Inter', sans-serif;
+                                text-anchor: middle;
+                            }
+                        </style>
+                    </defs>
+
+                    <!-- RELACIONAMENTOS -->
+
+                    <!-- Rua - Trecho -->
+                    <path class="conn-line" d="M150,200 L275,200" />
+                    <path class="conn-line" d="M345,200 L400,200" />
+
+                    <!-- Trecho - Rota (via Composição) -->
+                    <path class="conn-line" d="M450,230 L450,325" />
+                    <path class="conn-line" d="M750,400 L505,400 L505,350" />
+
+                    <!-- Evento - Rota (via Afetar) -->
+                    <path class="conn-line" d="M450,550 L600,550" />
+                    <path class="conn-line" d="M670,550 L800,550 L800,430" />
+
+                    <!-- Evento - Ponto (via Acontecimento) -->
+                    <path class="conn-line" d="M400,580 L400,650" />
+                    <!-- Linha direta para Ponto -->
+                    <path class="conn-line" d="M400,650 L850,650" />
+
+                    <!-- LOSANGOS -->
+
+                    <!-- Contém -->
+                    <g transform="translate(310, 200)">
+                        <polygon points="0,-25 35,0 0,25 -35,0" class="relation-shape" />
+                        <text y="4" class="relation-text">Contém</text>
+                        <g transform="translate(-12, 30)">
+                            <rect x="0" y="0" width="24" height="15" class="card-box" />
+                            <text x="12" y="11" class="card-text">1:N</text>
+                        </g>
+                    </g>
+
+                    <!-- Composição -->
+                    <g transform="translate(450, 350)">
+                        <polygon points="0,-25 55,0 0,25 -55,0" class="relation-shape" />
+                        <text y="4" class="relation-text">Composição</text>
+                        <g transform="translate(-12, 30)">
+                            <rect x="0" y="0" width="24" height="15" class="card-box" />
+                            <text x="12" y="11" class="card-text">N:N</text>
+                        </g>
+                    </g>
+
+                    <!-- Afetar -->
+                    <g transform="translate(635, 550)">
+                        <polygon points="0,-25 35,0 0,25 -35,0" class="relation-shape" />
+                        <text y="4" class="relation-text">Afetar</text>
+                        <g transform="translate(-12, -45)">
+                            <rect x="0" y="0" width="24" height="15" class="card-box" />
+                            <text x="12" y="11" class="card-text">N:N</text>
+                        </g>
+                    </g>
+
+                    <!-- Acontecimento (Maior) -->
+                    <g transform="translate(500, 650)">
+                        <polygon points="0,-25 70,0 0,25 -70,0" class="relation-shape" />
+                        <text y="4" class="relation-text">Acontecimento</text>
+                        <g transform="translate(-12, 30)">
+                            <rect x="0" y="0" width="24" height="15" class="card-box" />
+                            <text x="12" y="11" class="card-text">1:1</text>
+                        </g>
+                    </g>
+
+                    <!-- CARDINALIDADES COMBINADAS COM PAPÉIS -->
+
+                    <!-- Rua - Contém -->
+                    <!-- Antes: (1,1) pertence a -->
+                    <text x="170" y="195" class="cardinality">(1,1) pertence a</text>
+
+                    <!-- Contém - Trecho -->
+                    <!-- (1,n) tem -->
+                    <!-- Movido e ajustado -->
+                    <text x="350" y="195" class="cardinality">(1,n) tem</text>
+
+                    <!-- Trecho - Composição (Vertical) -->
+                    <!-- Cardinalidade (0,n) e Papel 'é composta por' ao lado direito -->
+                    <text x="455" y="250" class="cardinality">(0,n) é composta por</text>
+
+                    <!-- Rota - Composição (Horizontal) -->
+                    <!-- Cardinalidade (1,n) e Papel 'é de' -->
+                    <text x="690" y="390" class="cardinality">(1,n) é de</text>
+
+                    <!-- Evento - Afetar (Horizontal) -->
+                    <!-- Cardinalidade (1,n) e Papel 'afetada por' -->
+                    <text x="490" y="545" class="cardinality">(1,n) afetada por</text>
+
+                    <!-- Rota - Afetar (Vertical/Canto) -->
+                    <!-- Cardinalidade (0,n) e Papel 'afeta' -->
+                    <text x="810" y="530" class="cardinality">(0,n) afeta</text>
+
+
+                    <text x="350" y="620" class="cardinality">(1,1) tem</text>
+                    <text x="750" y="645" class="cardinality">(0,1) acontece em</text>
+
+
+                    <!-- ENTIDADES (Atributos Escada Invertida) -->
+
+                    <!-- RUA -->
+                    <g transform="translate(50, 170)">
+                        <path d="M10,0 L10,-65" class="attr-path" />
+                        <circle cx="10" cy="-65" r="4" class="attr-circle-pk" />
+                        <text x="18" y="-63" class="attr-text" font-weight="bold">idRua</text>
+
+                        <path d="M25,0 L25,-50" class="attr-path" />
+                        <circle cx="25" cy="-50" r="4" class="attr-circle" />
+                        <text x="33" y="-48" class="attr-text">nome</text>
+
+                        <path d="M40,0 L40,-35" class="attr-path" />
+                        <circle cx="40" cy="-35" r="4" class="attr-circle" />
+                        <text x="48" y="-33" class="attr-text">velocidadePadrao</text>
+
+                        <path d="M55,0 L55,-20" class="attr-path" />
+                        <circle cx="55" cy="-20" r="4" class="attr-circle" />
+                        <text x="63" y="-18" class="attr-text">sentido</text>
+
+                        <rect x="0" y="0" width="100" height="60" class="entity-box" />
+                        <text x="50" y="35" class="entity-text">Rua</text>
+                    </g>
+
+                    <!-- TRECHO -->
+                    <g transform="translate(400, 170)">
+                        <path d="M10,0 L10,-65" class="attr-path" />
+                        <circle cx="10" cy="-65" r="4" class="attr-circle-pk" />
+                        <text x="18" y="-63" class="attr-text" font-weight="bold">idTrecho</text>
+
+                        <path d="M25,0 L25,-50" class="attr-path" />
+                        <circle cx="25" cy="-50" r="4" class="attr-circle" />
+                        <text x="33" y="-48" class="attr-text">inicio</text>
+
+                        <path d="M40,0 L40,-35" class="attr-path" />
+                        <circle cx="40" cy="-35" r="4" class="attr-circle" />
+                        <text x="48" y="-33" class="attr-text">fim</text>
+
+                        <path d="M55,0 L55,-20" class="attr-path" />
+                        <circle cx="55" cy="-20" r="4" class="attr-circle" />
+                        <text x="63" y="-18" class="attr-text">distancia</text>
+
+                        <rect x="0" y="0" width="100" height="60" class="entity-box" />
+                        <text x="50" y="35" class="entity-text">Trecho</text>
+                    </g>
+
+                    <!-- ROTA -->
+                    <g transform="translate(750, 370)">
+                        <path d="M10,0 L10,-65" class="attr-path" />
+                        <circle cx="10" cy="-65" r="4" class="attr-circle-pk" />
+                        <text x="18" y="-63" class="attr-text" font-weight="bold">idRota</text>
+
+                        <path d="M25,0 L25,-50" class="attr-path" />
+                        <circle cx="25" cy="-50" r="4" class="attr-circle" />
+                        <text x="33" y="-48" class="attr-text">pontoOrigem</text>
+
+                        <path d="M40,0 L40,-35" class="attr-path" />
+                        <circle cx="40" cy="-35" r="4" class="attr-circle" />
+                        <text x="48" y="-33" class="attr-text">pontoDestino</text>
+
+                        <path d="M55,0 L55,-20" class="attr-path" />
+                        <circle cx="55" cy="-20" r="4" class="attr-circle" />
+                        <text x="63" y="-18" class="attr-text">tempoPrevisto</text>
+
+                        <rect x="0" y="0" width="100" height="60" class="entity-box" />
+                        <text x="50" y="35" class="entity-text">Rota</text>
+                    </g>
+
+                    <!-- EVENTO -->
+                    <g transform="translate(350, 520)">
+                        <path d="M10,0 L10,-65" class="attr-path" />
+                        <circle cx="10" cy="-65" r="4" class="attr-circle-pk" />
+                        <text x="18" y="-63" class="attr-text" font-weight="bold">idEvento</text>
+
+                        <path d="M25,0 L25,-50" class="attr-path" />
+                        <circle cx="25" cy="-50" r="4" class="attr-circle" />
+                        <text x="33" y="-48" class="attr-text">tipoEvento</text>
+
+                        <path d="M40,0 L40,-35" class="attr-path" />
+                        <circle cx="40" cy="-35" r="4" class="attr-circle" />
+                        <text x="48" y="-33" class="attr-text">impacto</text>
+
+                        <path d="M55,0 L55,-20" class="attr-path" />
+                        <circle cx="55" cy="-20" r="4" class="attr-circle" />
+                        <text x="63" y="-18" class="attr-text">localizacao</text>
+
+                        <rect x="0" y="0" width="100" height="60" class="entity-box" />
+                        <text x="50" y="35" class="entity-text">Evento</text>
+                    </g>
+
+                    <!-- PONTO -->
+                    <g transform="translate(850, 620)">
+                        <path d="M10,0 L10,-65" class="attr-path" />
+                        <circle cx="10" cy="-65" r="4" class="attr-circle-pk" />
+                        <text x="18" y="-63" class="attr-text" font-weight="bold">idPonto</text>
+
+                        <path d="M25,0 L25,-50" class="attr-path" />
+                        <circle cx="25" cy="-50" r="4" class="attr-circle" />
+                        <text x="33" y="-48" class="attr-text">latitude</text>
+
+                        <path d="M40,0 L40,-35" class="attr-path" />
+                        <circle cx="40" cy="-35" r="4" class="attr-circle" />
+                        <text x="48" y="-33" class="attr-text">longitude</text>
+
+                        <path d="M55,0 L55,-20" class="attr-path" />
+                        <circle cx="55" cy="-20" r="4" class="attr-circle" />
+                        <text x="63" y="-18" class="attr-text">tipoPonto</text>
+
+                        <rect x="0" y="0" width="100" height="60" class="entity-box" />
+                        <text x="50" y="35" class="entity-text">Ponto</text>
+                    </g>
+                </svg>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Overlay da Lupa Forense -->
+    <div id="magnifier-overlay" class="magnifier-overlay">
+        <div class="magnifier">
+            <div id="magnifier-content" class="magnifier-content">
+                <!-- Conteúdo dinâmico -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Painel Raio-X -->
+    <div id="xray-panel" class="xray-panel">
+        <div class="xray-header">
+            <h2 class="xray-title">
+                <svg style="width:24px;height:24px;fill:currentColor;vertical-align:middle;margin-right:8px;"
+                    viewBox="0 0 24 24">
+                    <path
+                        d="M13,9H18.5L13,3.5V9M6,2H14L20,8V20A2,2 0 0,1 18,22H6C4.89,22 4,21.1 4,20V4C4,2.89 4.89,2 6,2M7,20H9V18H7V20M11,20H13V18H11V20M15,20H17V18H15V20M7,16H9V14H7V16M11,16H13V14H11V16M15,16H17V14H15V16M7,12H9V10H7V12M11,12H13V10H11V12M15,12H17V10H15V12Z" />
+                </svg>
+                Raio-X de Dados
+            </h2>
+            <button id="xray-close" class="xray-close">✕</button>
+        </div>
+
+        <div class="xray-section">
+            <h4>
+                <svg style="width:16px;height:16px;fill:currentColor;vertical-align:middle;margin-right:6px;"
+                    viewBox="0 0 24 24">
+                    <path
+                        d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M19,19H5V5H19V19M11,7H13V9H11V7M11,11H13V13H11V11M11,15H13V17H11V15Z" />
+                </svg>
+                Dados da Entidade
+            </h4>
+            <div id="xray-data" class="xray-data">
+                <!-- Dados dinâmicos -->
+            </div>
+        </div>
+
+        <div class="xray-section">
+            <h4>
+                <svg style="width:16px;height:16px;fill:currentColor;vertical-align:middle;margin-right:6px;"
+                    viewBox="0 0 24 24">
+                    <path
+                        d="M10.59,13.41C11,13.8 11,14.44 10.59,14.83C10.2,15.22 9.56,15.22 9.17,14.83C7.22,12.88 7.22,9.71 9.17,7.76V7.76L12.71,4.22C14.66,2.27 17.83,2.27 19.78,4.22C21.73,6.17 21.73,9.34 19.78,11.29L18.29,12.78C18.3,11.96 18.17,11.14 17.89,10.36L18.36,9.88C19.54,8.71 19.54,6.81 18.36,5.64C17.19,4.46 15.29,4.46 14.12,5.64L10.59,9.17C9.41,10.34 9.41,12.24 10.59,13.41M13.41,9.17C13.8,8.78 14.44,8.78 14.83,9.17C16.78,11.12 16.78,14.29 14.83,16.24V16.24L11.29,19.78C9.34,21.73 6.17,21.73 4.22,19.78C2.27,17.83 2.27,14.66 4.22,12.71L5.71,11.22C5.7,12.04 5.83,12.86 6.11,13.65L5.64,14.12C4.46,15.29 4.46,17.19 5.64,18.36C6.81,19.54 8.71,19.54 9.88,18.36L13.41,14.83C14.59,13.66 14.59,11.76 13.41,10.59C13,10.2 13,9.56 13.41,9.17Z" />
+                </svg>
+                Mini-Relações
+            </h4>
+            <ul id="xray-relations" class="xray-relations">
+                <!-- Relações dinâmicas -->
+            </ul>
+        </div>
+    </div>
+
+    <!-- Script carregado no final para garantir que o DOM exista -->
+    <script src="../js/arquiteturaDados.js"></script>
+</body>
+
+</html>
